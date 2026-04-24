@@ -24,13 +24,24 @@ export function validateTelegramWebAppData(initData: string, botToken: string): 
     const dataCheckString = dataKeys.map(key => `${key}=${urlParams.get(key)}`).join('\n');
     
     // Генерируем секретный ключ с использованием HMAC-SHA256
-    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const cleanToken = botToken.trim();
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(cleanToken).digest();
     
     // Хэшируем строку проверки с секретным ключом
     const _hash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
     
     // Сравниваем полученный хэш с тем, что прислал Telegram
-    return _hash === hash;
+    const isValid = _hash === hash;
+    if (!isValid) {
+      console.log('--- Telegram Validation Failed ---');
+      console.log('initData:', initData);
+      console.log('botToken:', botToken.substring(0, 5) + '***');
+      console.log('dataCheckString:\n' + dataCheckString);
+      console.log('Expected hash:', hash);
+      console.log('Calculated hash:', _hash);
+      console.log('----------------------------------');
+    }
+    return isValid;
   } catch (err) {
     console.error('Ошибка валидации Telegram data:', err);
     return false;

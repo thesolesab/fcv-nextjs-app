@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/utils/supabase';
 const getBotToken = () => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not set');
-  return token;
+  return token.trim();
 };
 
 // CREATE or UPDATE a user
