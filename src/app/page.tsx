@@ -17,8 +17,10 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // WebApp works only in the browser
     if (typeof window !== 'undefined') {
       WebApp.ready();
@@ -29,6 +31,9 @@ export default function Home() {
       }
     }
   }, []);
+
+  if (!isMounted) return null; // Prevent hydration mismatch
+
 
   const registerUser = async () => {
     if (!initData) {
