@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      return NextResponse.json({ error: `Database error: ${error.message || JSON.stringify(error)}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, user: data });
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      return NextResponse.json({ error: `Database error: ${error.message || JSON.stringify(error)}` }, { status: 500 });
     }
 
     return NextResponse.json({ users: data });
@@ -117,7 +117,7 @@ export async function DELETE(req: NextRequest) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      return NextResponse.json({ error: `Database error: ${error.message || JSON.stringify(error)}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, deletedId: userId });
