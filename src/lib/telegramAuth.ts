@@ -1,10 +1,17 @@
 import crypto from 'crypto';
+import { TelegramUser } from '@/types/telegram';
+
+/**
+ * Получает токен бота из переменных окружения
+ */
+export function getBotToken(): string {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not set');
+  return token.trim();
+}
 
 /**
  * Валидирует данные, пришедшие от Telegram Web App (initData)
- * @param initData строка initData из Telegram Web App
- * @param botToken токен вашего бота из BotFather
- * @returns true если данные подлинные, иначе false
  */
 export function validateTelegramWebAppData(initData: string, botToken: string): boolean {
   try {
@@ -35,7 +42,7 @@ export function validateTelegramWebAppData(initData: string, botToken: string): 
     if (!isValid) {
       console.log('--- Telegram Validation Failed ---');
       console.log('initData:', initData);
-      console.log('botToken:', botToken.substring(0, 5) + '***');
+      console.log('botToken:', cleanToken.substring(0, 5) + '***');
       console.log('dataCheckString:\n' + dataCheckString);
       console.log('Expected hash:', hash);
       console.log('Calculated hash:', _hash);
@@ -45,5 +52,20 @@ export function validateTelegramWebAppData(initData: string, botToken: string): 
   } catch (err) {
     console.error('Ошибка валидации Telegram data:', err);
     return false;
+  }
+}
+
+/**
+ * Извлекает данные пользователя (JSON) из initData
+ */
+export function getTelegramUserFromInitData(initData: string): TelegramUser | null {
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const userStr = urlParams.get('user');
+    if (!userStr) return null;
+    return JSON.parse(userStr) as TelegramUser;
+  } catch (err) {
+    console.error('Error parsing user from initData', err);
+    return null;
   }
 }

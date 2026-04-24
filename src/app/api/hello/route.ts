@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateTelegramWebAppData } from '@/utils/telegramAuth';
+import { validateTelegramWebAppData } from '@/lib/telegramAuth';
 
 // Пример получения переменных окружения. В реальном приложении задайте их в .env.local
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
