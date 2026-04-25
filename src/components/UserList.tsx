@@ -1,48 +1,55 @@
 'use client';
 
-import { useTelegram } from './providers/TelegramProvider';
 import { User } from '@/types/user';
 import { useState } from 'react';
 
 interface UserListProps {
   users: User[];
-  onRefreshList: () => void;
+  onDelete: (id: number) => Promise<void>;
+  isLoading: boolean;
+  error?: any;
 }
 
-export function UserList({ users, onRefreshList }: UserListProps) {
-  const { initData } = useTelegram();
+export function UserList({ users, onDelete, isLoading, error }: UserListProps) {
   const [loadingId, setLoadingId] = useState<number | null>(null);
 
-  const deleteUser = async (userId: number) => {
-    if (!initData || !confirm('Точно удалить пользователя?')) return;
-
+  const handleDelete = async (userId: number) => {
+    if (!confirm('Точно удалить пользователя?')) return;
+    
     setLoadingId(userId);
     try {
-      const res = await fetch('/api/users', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData, userId })
-      });
-      
-      if (res.ok) {
-        onRefreshList();
-      } else {
-        const data = await res.json();
-        alert(`Ошибка: ${data.error}`);
-      }
+      await onDelete(userId);
     } catch (e: any) {
-      alert(`Ошибка сети: ${e.message}`);
+      alert(`Ошибка: ${e.message}`);
     } finally {
       setLoadingId(null);
     }
   };
 
+  if (error) {
+    return (
+      <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-xl border border-red-100">
+        <p className="font-semibold text-sm">Ошибка загрузки пользователей:</p>
+        <p className="text-xs">{error.message}</p>
+      </div>
+    );
+  }
+
+  if (isLoading && users.length === 0) {
+    return (
+      <div className="mt-4 p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 text-center text-sm text-zinc-500">
+        Загрузка пользователей...
+      </div>
+    );
+  }
+
   if (users.length === 0) return null;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden mt-4">
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
         <h2 className="font-semibold">Пользователи в БД ({users.length})</h2>
+        {isLoading && <span className="text-xs text-zinc-400">Обновление...</span>}
       </div>
       <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-64 overflow-y-auto">
         {users.map(u => (
@@ -52,7 +59,7 @@ export function UserList({ users, onRefreshList }: UserListProps) {
               <p className="text-xs text-zinc-500">@{u.username} • ID: {u.id}</p>
             </div>
             <button
-              onClick={() => deleteUser(u.id)}
+              onClick={() => handleDelete(u.id)}
               disabled={loadingId === u.id}
               className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-md transition-colors disabled:opacity-50"
               title="Удалить"

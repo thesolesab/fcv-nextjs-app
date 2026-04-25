@@ -4,38 +4,22 @@ import { useState } from 'react';
 import { useTelegram } from './providers/TelegramProvider';
 
 interface UserProfileProps {
-  onRefreshList: () => void;
+  onRegister: () => Promise<void>;
 }
 
-export function UserProfile({ onRefreshList }: UserProfileProps) {
-  const { user: telegramUser, initData } = useTelegram();
+export function UserProfile({ onRegister }: UserProfileProps) {
+  const { user: telegramUser } = useTelegram();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const registerUser = async () => {
-    if (!initData) {
-      setMessage('Нет данных initData. Откройте приложение в Telegram.');
-      return;
-    }
-
+  const handleRegister = async () => {
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData })
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setMessage('Пользователь успешно сохранен в БД!');
-        onRefreshList();
-      } else {
-        setMessage(`Ошибка: ${data.error}`);
-      }
-    } catch (e: any) {
-      setMessage(`Ошибка сети: ${e.message}`);
+      await onRegister();
+      setMessage('Пользователь успешно сохранен в БД!');
+    } catch (err: any) {
+      setMessage(`Ошибка: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -60,25 +44,16 @@ export function UserProfile({ onRefreshList }: UserProfileProps) {
         <p className="text-sm text-amber-600 mb-4">Данные профиля недоступны. Откройте в Telegram.</p>
       )}
 
-      <div className="flex gap-2">
-        <button 
-          onClick={registerUser}
-          disabled={loading || !initData}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-        >
-          {loading ? 'Сохранение...' : 'Сохранить себя'}
-        </button>
-        <button 
-          onClick={onRefreshList}
-          disabled={loading || !initData}
-          className="flex-1 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 disabled:opacity-50 text-zinc-900 dark:text-zinc-100 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-        >
-          Загрузить всех
-        </button>
-      </div>
+      <button 
+        onClick={handleRegister}
+        disabled={loading || !telegramUser}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 px-4 rounded-lg transition-colors text-sm"
+      >
+        {loading ? 'Сохранение...' : 'Сохранить себя'}
+      </button>
 
       {message && (
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-lg text-xs break-words">
+        <div className={`mt-4 p-3 rounded-lg text-xs break-words ${message.includes('Ошибка') ? 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300' : 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300'}`}>
           {message}
         </div>
       )}

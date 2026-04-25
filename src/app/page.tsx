@@ -4,44 +4,26 @@ import { useState, useEffect } from 'react';
 import { TelegramProvider, useTelegram } from '@/components/providers/TelegramProvider';
 import { UserProfile } from '@/components/UserProfile';
 import { UserList } from '@/components/UserList';
-import { User } from '@/types/user';
+import { useUsers } from '@/hooks/useUsers';
 
 function Dashboard() {
-  const { initData, isReady } = useTelegram();
-  const [users, setUsers] = useState<User[]>([]);
-
-  const fetchUsers = async () => {
-    if (!initData) return;
-    try {
-      const res = await fetch('/api/users', {
-        headers: { 'x-telegram-init-data': initData }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUsers(data.users || []);
-      } else {
-        console.error('Ошибка при получении пользователей:', data.error);
-      }
-    } catch (e: any) {
-      console.error('Ошибка сети:', e.message);
-    }
-  };
-
-  useEffect(() => {
-    if (initData) {
-      fetchUsers();
-    }
-  }, [initData]);
+  const { isReady } = useTelegram();
+  const { users, isLoading, error, registerUser, deleteUser } = useUsers();
 
   if (!isReady) {
-    return <div className="min-h-screen flex items-center justify-center text-sm">Инициализация Telegram...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Инициализация Telegram...</div>;
   }
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-zinc-50 dark:bg-black text-black dark:text-white">
       <div className="max-w-md w-full space-y-4">
-        <UserProfile onRefreshList={fetchUsers} />
-        <UserList users={users} onRefreshList={fetchUsers} />
+        <UserProfile onRegister={registerUser} />
+        <UserList 
+          users={users} 
+          onDelete={deleteUser} 
+          isLoading={isLoading} 
+          error={error} 
+        />
       </div>
     </div>
   );
