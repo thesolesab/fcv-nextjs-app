@@ -1,15 +1,15 @@
 import { prisma } from '@/lib/prisma';
-import { TelegramUser } from '@/types/telegram';
 import { User } from '@/types/user';
+import { TelegramUser } from '@/types/telegram';
 
-// Вспомогательная функция для безопасной конвертации Prisma User в наш интерфейс
-// Так как Prisma возвращает id как BigInt, а JSON.stringify не умеет работать с BigInt
-const mapPrismaUser = (u: any): User => ({
-  id: Number(u.id),
-  username: u.username,
-  first_name: u.first_name,
-  last_name: u.last_name,
-  created_at: u.created_at?.toISOString()
+// Prisma возвращает `id` как BigInt, который стандартный JSON.stringify не умеет сериализовать.
+// Поэтому мы преобразуем его обратно в обычный JS Number, который отлично вмещает ID из Telegram.
+const mapPrismaUser = (user: any): User => ({
+  id: Number(user.id),
+  username: user.username,
+  first_name: user.first_name,
+  last_name: user.last_name,
+  created_at: user.created_at?.toISOString()
 });
 
 export const userService = {
@@ -23,7 +23,7 @@ export const userService = {
       });
       return users.map(mapPrismaUser);
     } catch (error: any) {
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Prisma error: ${error.message}`);
     }
   },
 
@@ -48,7 +48,7 @@ export const userService = {
       });
       return mapPrismaUser(user);
     } catch (error: any) {
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Prisma error: ${error.message}`);
     }
   },
 
@@ -61,9 +61,7 @@ export const userService = {
         where: { id: BigInt(userId) }
       });
     } catch (error: any) {
-      // Prisma throws an error if record doesn't exist. We can ignore it or rethrow.
-      if (error.code === 'P2025') return; // Record to delete does not exist.
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Prisma error: ${error.message}`);
     }
   }
 };
