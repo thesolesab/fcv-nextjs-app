@@ -15,3 +15,12 @@ model User {
 
   @@map("users")
 }
+
+model Team {
+  id                 String   @id @default(uuid())
+  telegram_chat_id   BigInt   @unique
+  name               String?
+  created_at         DateTime @default(now())
+
+  @@map("teams")
+}
