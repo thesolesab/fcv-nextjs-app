@@ -13,6 +13,9 @@ model User {
   last_name  String?
   created_at DateTime @default(now())
 
+  team_members  TeamMember[]
+  registrations GameRegistration[]
+
   @@map("users")
 }
 
@@ -22,5 +25,76 @@ model Team {
   name               String?
   created_at         DateTime @default(now())
 
+  members            TeamMember[]
+  games              Game[]
+  schedules          TeamSchedule[]
+
   @@map("teams")
+}
+
+model TeamSchedule {
+  id          String   @id @default(uuid())
+  team_id     String
+  day_of_week Int      // 0 (Воскресенье) - 6 (Суббота)
+  time        String   // "HH:mm"
+  location    String?
+  created_at  DateTime @default(now())
+
+  team        Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@map("team_schedules")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model TeamMember {
+  id         String   @id @default(uuid())
+  user_id    BigInt
+  team_id    String
+  role       Role     @default(MEMBER)
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, team_id])
+  @@map("team_members")
+}
+
+model Game {
+  id                  String   @id @default(uuid())
+  team_id             String
+  date                DateTime
+  location            String?
+  description         String?
+  telegram_message_id BigInt?
+  created_at          DateTime @default(now())
+
+  team          Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  registrations GameRegistration[]
+
+  @@map("games")
+}
+
+enum RegistrationStatus {
+  GOING
+  NOT_GOING
+  MAYBE
+}
+
+model GameRegistration {
+  id          String   @id @default(uuid())
+  game_id     String
+  user_id     BigInt
+  status      RegistrationStatus
+  created_at  DateTime @default(now())
+
+  game        Game     @relation(fields: [game_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([game_id, user_id])
+  @@map("game_registrations")
 }
