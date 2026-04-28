@@ -64,7 +64,7 @@ export const teamService = {
       throw new Error('Forbidden');
     }
 
-    return await prisma.teamSchedule.create({
+    const schedule = await prisma.teamSchedule.create({
       data: {
         team_id: teamId,
         day_of_week: dayOfWeek,
@@ -72,6 +72,37 @@ export const teamService = {
         location
       }
     });
+
+    // Сразу генерируем первую игру по этому расписанию
+    const today = new Date();
+    let daysUntil = dayOfWeek - today.getDay();
+    if (daysUntil <= 0) daysUntil += 7; // Следующее наступление этого дня недели
+    
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + daysUntil);
+    const [hours, minutes] = time.split(':').map(Number);
+    nextDate.setHours(hours, minutes, 0, 0);
+
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+
+    if (team) {
+      const newGame = await prisma.game.create({
+        data: {
+          team_id: teamId,
+          date: nextDate,
+          location,
+          description: 'Автоматически созданная игра по новому расписанию'
+        }
+      });
+
+      // Отправляем анонс в Telegram группу (импортируем gameMessageBuilder внутри функции чтобы избежать circular dependency или импортируем в начале)
+      const { gameMessageBuilder } = await import('@/lib/gameMessageBuilder');
+      if (team.telegram_chat_id) {
+        await gameMessageBuilder.sendGameMessage(team.telegram_chat_id, newGame);
+      }
+    }
+
+    return schedule;
   },
 
   async deleteSchedule(userId: number, teamId: string, scheduleId: string) {
