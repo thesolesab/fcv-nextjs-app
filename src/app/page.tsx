@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { TelegramProvider, useTelegram } from '@/components/providers/TelegramProvider';
 import { UserProfile } from '@/components/UserProfile';
-import { UserList } from '@/components/UserList';
+import { TeamList } from '@/components/TeamList';
 import { useUsers } from '@/hooks/useUsers';
+import { useTeams } from '@/hooks/useTeams';
 
 function Dashboard() {
   const { isReady } = useTelegram();
-  const { users, isLoading, error, registerUser, deleteUser } = useUsers();
+  const { registerUser } = useUsers();
+  const { teams, isLoading, error } = useTeams();
 
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Инициализация Telegram...</div>;
@@ -16,14 +18,9 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-zinc-50 dark:bg-black text-black dark:text-white">
-      <div className="max-w-md w-full space-y-4">
+      <div className="max-w-md w-full space-y-6">
         <UserProfile onRegister={registerUser} />
-        <UserList 
-          users={users} 
-          onDelete={deleteUser} 
-          isLoading={isLoading} 
-          error={error} 
-        />
+        <TeamList teams={teams} isLoading={isLoading} error={error} />
       </div>
     </div>
   );
