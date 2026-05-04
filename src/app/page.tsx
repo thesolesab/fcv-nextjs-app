@@ -8,9 +8,21 @@ import { useUsers } from '@/hooks/useUsers';
 import { useTeams } from '@/hooks/useTeams';
 
 function Dashboard() {
-  const { isReady } = useTelegram();
+  const { isReady, startParam } = useTelegram();
   const { registerUser } = useUsers();
-  const { teams, isLoading, error } = useTeams();
+  const { teams, isLoading, error, joinTeam } = useTeams();
+
+  // Автоматическое вступление в команду при наличии startapp параметра
+  useEffect(() => {
+    if (isReady && startParam) {
+      if (!startParam.startsWith('game_')) {
+        // Регистрируем юзера на всякий случай
+        registerUser().catch(() => {});
+        // Вступаем в команду (параметр является teamId)
+        joinTeam(startParam).catch(() => {});
+      }
+    }
+  }, [isReady, startParam]);
 
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Инициализация Telegram...</div>;

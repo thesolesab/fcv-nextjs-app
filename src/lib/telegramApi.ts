@@ -1,4 +1,13 @@
 export const telegramApi = {
+  async getMe() {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not defined');
+    
+    const url = `https://api.telegram.org/bot${token}/getMe`;
+    const res = await fetch(url);
+    return res.json();
+  },
+
   async sendMessage(chatId: string | number | bigint, text: string, replyMarkup?: any) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not defined');

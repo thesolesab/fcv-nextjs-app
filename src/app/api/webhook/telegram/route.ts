@@ -91,6 +91,21 @@ export async function POST(req: NextRequest) {
           console.log(`[Webhook] User ${from.id} assigned as ADMIN to Team ${team.id}`);
         }
 
+        // 4. Отправляем приветственное сообщение в группу с кнопкой
+        const botInfo = await import('@/lib/telegramApi').then(m => m.telegramApi.getMe());
+        const botUsername = botInfo?.result?.username || 'fcv_app_bot';
+        // Предполагаем, что шортнейм приложения - "app"
+        const appUrl = `https://t.me/${botUsername}/app?startapp=${team.id}`;
+
+        const text = `🎉 <b>Привет! Я бот для управления футбольными сборами.</b>\n\nПрофиль команды для этого чата успешно создан!\n\nНажмите на кнопку ниже, чтобы открыть приложение и присоединиться к составу команды.`;
+        const markup = {
+          inline_keyboard: [
+            [{ text: '⚽ Присоединиться к команде', url: appUrl }]
+          ]
+        };
+
+        await import('@/lib/telegramApi').then(m => m.telegramApi.sendMessage(chat.id, text, markup));
+
         console.log(`[Webhook] Team created/updated for chat ${chat.id}: ${team.name} (Team UUID: ${team.id})`);
       }
     }

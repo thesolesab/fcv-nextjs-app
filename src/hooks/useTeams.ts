@@ -15,11 +15,27 @@ export function useTeams() {
     return res.json();
   };
 
-  const { data, error, isLoading } = useSWR(initData ? '/api/my-teams' : null, fetcher);
+  const { data, error, isLoading, mutate } = useSWR(initData ? '/api/my-teams' : null, fetcher);
+
+  const joinTeam = async (teamId: string) => {
+    if (!initData) return;
+    const res = await fetch('/api/teams/join', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-telegram-init-data': initData,
+      },
+      body: JSON.stringify({ teamId }),
+    });
+    if (res.ok) {
+      mutate();
+    }
+  };
 
   return {
     teams: data?.teams || [],
     isLoading,
     error,
+    joinTeam,
   };
 }

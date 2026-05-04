@@ -13,6 +13,10 @@ export const GET = withTelegramAuth(async (req) => {
 export const POST = withTelegramAuth(async (req, user) => {
   const { teamId, dayOfWeek, time, location } = await req.json();
   const schedule = await teamService.createSchedule(user.id, teamId, Number(dayOfWeek), time, location);
+  
+  // Автоматически генерируем игры по новому расписанию
+  import('@/services/gameService').then(m => m.gameService.generateMissingGames(teamId));
+
   return { success: true, schedule };
 });
 
