@@ -40,5 +40,5 @@ export function useGames(teamId: string) {
     }
   };
 
-  return { games: data || [], isLoading, error, registerForGame };
+  return { games: data?.games || [], isLoading, error, registerForGame };
 }
