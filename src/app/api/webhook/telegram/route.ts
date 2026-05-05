@@ -139,7 +139,28 @@ export async function POST(req: NextRequest) {
           const gameId = parts.slice(2).join('_'); // id может содержать дефисы (UUID)
           const status = action === 'go' ? 'GOING' : 'NOT_GOING';
 
-          // Регистрируем
+          // Находим игру, чтобы узнать команду
+          const game = await prisma.game.findUnique({ where: { id: gameId } });
+          
+          if (game) {
+            // Добавляем юзера в участники команды, если его там еще нет
+            await prisma.teamMember.upsert({
+              where: {
+                user_id_team_id: {
+                  user_id: BigInt(from.id),
+                  team_id: game.team_id
+                }
+              },
+              update: {}, // Ничего не меняем, если он уже в команде
+              create: {
+                user_id: BigInt(from.id),
+                team_id: game.team_id,
+                role: 'MEMBER'
+              }
+            });
+          }
+
+          // Регистрируем на игру
           await gameService.registerForGame(gameId, from.id, status as any);
 
           // Обновляем сообщение в группе

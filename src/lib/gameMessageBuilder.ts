@@ -37,7 +37,7 @@ export const gameMessageBuilder = {
     return text;
   },
 
-  getInlineKeyboard(gameId: string) {
+  getInlineKeyboard(gameId: string, botUsername: string = 'fcv_app_bot') {
     return {
       inline_keyboard: [
         [
@@ -45,7 +45,7 @@ export const gameMessageBuilder = {
           { text: '❌ Не иду', callback_data: `game_notgo_${gameId}` }
         ],
         [
-          { text: '📱 Открыть приложение', url: `https://t.me/your_bot_username/app?startapp=game_${gameId}` }
+          { text: '📱 Открыть приложение', url: `https://t.me/${botUsername}/app?startapp=game_${gameId}` }
         ]
       ]
     };
@@ -53,7 +53,12 @@ export const gameMessageBuilder = {
 
   async sendGameMessage(teamChatId: bigint, game: any) {
     const text = this.buildMessageText(game, []);
-    const markup = this.getInlineKeyboard(game.id);
+    
+    // Получаем юзернейм бота для ссылки
+    const botInfo = await telegramApi.getMe();
+    const botUsername = botInfo?.result?.username || 'fcv_app_bot';
+    
+    const markup = this.getInlineKeyboard(game.id, botUsername);
     const result = await telegramApi.sendMessage(teamChatId, text, markup);
     if (result.ok && result.result?.message_id) {
       // Сохраняем ID сообщения в БД
@@ -75,7 +80,11 @@ export const gameMessageBuilder = {
 
     if (game && game.telegram_message_id && game.team?.telegram_chat_id) {
       const text = this.buildMessageText(game, game.registrations);
-      const markup = this.getInlineKeyboard(game.id);
+      
+      const botInfo = await telegramApi.getMe();
+      const botUsername = botInfo?.result?.username || 'fcv_app_bot';
+      
+      const markup = this.getInlineKeyboard(game.id, botUsername);
       await telegramApi.editMessageText(
         game.team.telegram_chat_id,
         game.telegram_message_id,
