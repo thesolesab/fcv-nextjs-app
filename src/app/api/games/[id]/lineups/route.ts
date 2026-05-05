@@ -1,14 +1,16 @@
 import { withTelegramAuth } from '@/lib/api-handler';
 import { gameService } from '@/services/gameService';
 
-export const GET = withTelegramAuth(async (req, user, context) => {
-  const gameId = context.params.id;
+export const GET = withTelegramAuth(async (req, user, context: any) => {
+  const params = await context.params;
+  const gameId = params.id;
   const lineups = await gameService.getGameLineups(gameId);
   return { lineups };
 });
 
-export const POST = withTelegramAuth(async (req, user, context) => {
-  const gameId = context.params.id;
+export const POST = withTelegramAuth(async (req, user, context: any) => {
+  const params = await context.params;
+  const gameId = params.id;
   const { name } = await req.json();
   
   if (!name) throw new Error('Missing lineup name');
