@@ -86,5 +86,40 @@ export const teamService = {
     await prisma.teamSchedule.delete({
       where: { id: scheduleId }
     });
+  },
+
+  async getMembers(userId: number, teamId: string) {
+    // Проверка, что юзер состоит в команде
+    const member = await prisma.teamMember.findUnique({
+      where: { user_id_team_id: { user_id: BigInt(userId), team_id: teamId } }
+    });
+
+    if (!member) throw new Error('Forbidden');
+
+    const members = await prisma.teamMember.findMany({
+      where: { team_id: teamId },
+      include: { user: true },
+      orderBy: { created_at: 'asc' }
+    });
+
+    return members.map(m => ({
+      ...m,
+      user_id: Number(m.user_id)
+    }));
+  },
+
+  async updateMemberRole(userId: number, teamId: string, targetUserId: number, newRole: any) {
+    const adminMember = await prisma.teamMember.findUnique({
+      where: { user_id_team_id: { user_id: BigInt(userId), team_id: teamId } }
+    });
+
+    if (!adminMember || adminMember.role !== 'ADMIN') {
+      throw new Error('Forbidden');
+    }
+
+    return await prisma.teamMember.update({
+      where: { user_id_team_id: { user_id: BigInt(targetUserId), team_id: teamId } },
+      data: { role: newRole }
+    });
   }
 };

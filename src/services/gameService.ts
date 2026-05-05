@@ -7,7 +7,7 @@ export const gameService = {
    */
   async createGame(teamId: string, date: Date, location?: string, description?: string) {
     try {
-      return await prisma.game.create({
+      const game = await prisma.game.create({
         data: {
           team_id: teamId,
           date,
@@ -15,6 +15,16 @@ export const gameService = {
           description,
         }
       });
+
+      // Автоматически создаем 2 состава для новой игры
+      await prisma.gameLineup.createMany({
+        data: [
+          { game_id: game.id, name: 'Команда 1' },
+          { game_id: game.id, name: 'Команда 2' }
+        ]
+      });
+
+      return game;
     } catch (error: any) {
       throw new Error(`Prisma error: ${error.message}`);
     }
@@ -104,7 +114,7 @@ export const gameService = {
   },
 
   /**
-   * Генерирует игры по расписанию на ближайшие 14 дней
+   * Генерирует игры по расписанию на ближайшие 7 дней
    * @param teamId Опционально: сгенерировать только для конкретной команды
    */
   async generateMissingGames(teamId?: string) {
@@ -119,8 +129,8 @@ export const gameService = {
       let createdCount = 0;
 
       for (const schedule of schedules) {
-        // Проверяем следующие 14 дней
-        for (let i = 1; i <= 14; i++) {
+        // Проверяем следующие 7 дней
+        for (let i = 1; i <= 7; i++) {
           const targetDate = new Date(today);
           targetDate.setDate(today.getDate() + i);
 
@@ -150,6 +160,14 @@ export const gameService = {
                 }
               });
 
+              // Создаем 2 состава
+              await prisma.gameLineup.createMany({
+                data: [
+                  { game_id: newGame.id, name: 'Команда 1' },
+                  { game_id: newGame.id, name: 'Команда 2' }
+                ]
+              });
+
               // Отправляем анонс в Telegram группу
               if (schedule.team.telegram_chat_id) {
                 await gameMessageBuilder.sendGameMessage(schedule.team.telegram_chat_id, newGame);
@@ -165,5 +183,77 @@ export const gameService = {
       console.error('generateMissingGames error:', error);
       throw new Error(`Generate Games Error: ${error.message}`);
     }
+  },
+
+  /**
+   * Получить составы игры
+   */
+  async getGameLineups(gameId: string) {
+    return await prisma.gameLineup.findMany({
+      where: { game_id: gameId },
+      include: {
+        players: {
+          include: { user: true }
+        }
+      },
+      orderBy: { created_at: 'asc' }
+    });
+  },
+
+  /**
+   * Создать новый состав (например, "Команда 3")
+   */
+  async createLineup(gameId: string, name: string) {
+    return await prisma.gameLineup.create({
+      data: {
+        game_id: gameId,
+        name
+      }
+    });
+  },
+
+  /**
+   * Удалить состав
+   */
+  async deleteLineup(lineupId: string) {
+    return await prisma.gameLineup.delete({
+      where: { id: lineupId }
+    });
+  },
+
+  /**
+   * Назначить игрока в состав
+   */
+  async assignPlayerToLineup(lineupId: string, userId: number, gameId: string) {
+    // Сначала удаляем игрока из всех других составов этой игры
+    const lineups = await prisma.gameLineup.findMany({ where: { game_id: gameId } });
+    const lineupIds = lineups.map((l: any) => l.id);
+
+    await prisma.lineupPlayer.deleteMany({
+      where: {
+        user_id: BigInt(userId),
+        lineup_id: { in: lineupIds }
+      }
+    });
+
+    // Теперь добавляем в нужный состав
+    return await prisma.lineupPlayer.create({
+      data: {
+        lineup_id: lineupId,
+        user_id: BigInt(userId)
+      }
+    });
+  },
+
+  /**
+   * Убрать игрока из состава
+   */
+  async removePlayerFromLineup(lineupId: string, userId: number) {
+    return await prisma.lineupPlayer.deleteMany({
+      where: {
+        lineup_id: lineupId,
+        user_id: BigInt(userId)
+      }
+    });
   }
 };

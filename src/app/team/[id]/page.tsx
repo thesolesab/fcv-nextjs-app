@@ -32,13 +32,22 @@ function TeamDashboard({ teamId }: { teamId: string }) {
 
         {/* Admin Section */}
         {team.role === 'ADMIN' && (
-          <button 
-            onClick={() => router.push(`/team/${teamId}/admin`)}
-            className="w-full flex items-center justify-center space-x-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 py-3 rounded-xl transition-colors font-medium border border-blue-500/20"
-          >
-            <span>⚙️</span>
-            <span>Настройки расписания</span>
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => router.push(`/team/${teamId}/admin`)}
+              className="flex-1 flex items-center justify-center space-x-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 py-3 rounded-xl transition-colors font-medium border border-blue-500/20"
+            >
+              <span>⚙️</span>
+              <span>Расписание</span>
+            </button>
+            <button 
+              onClick={() => router.push(`/team/${teamId}/members`)}
+              className="flex-1 flex items-center justify-center space-x-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 py-3 rounded-xl transition-colors font-medium border border-purple-500/20"
+            >
+              <span>👥</span>
+              <span>Участники</span>
+            </button>
+          </div>
         )}
 
         {/* Games Section */}
@@ -101,6 +110,15 @@ function TeamDashboard({ teamId }: { teamId: string }) {
                         ❌ Не иду
                       </button>
                     </div>
+
+                    {/* Кнопка составов */}
+                    <button 
+                      onClick={() => router.push(`/team/${teamId}/games/${game.id}/lineups`)}
+                      className="w-full py-2 mb-4 flex justify-center items-center gap-2 rounded-xl font-medium transition-all active:scale-[0.98] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                    >
+                      <span>📋</span>
+                      <span>Составы на игру</span>
+                    </button>
 
                     {/* Статистика */}
                     <div className="flex justify-between text-xs text-zinc-500 mt-2 px-1">

@@ -15,6 +15,7 @@ model User {
 
   team_members  TeamMember[]
   registrations GameRegistration[]
+  lineups       LineupPlayer[]
 
   @@map("users")
 }
@@ -47,6 +48,7 @@ model TeamSchedule {
 
 enum Role {
   ADMIN
+  COACH
   MEMBER
 }
 
@@ -75,6 +77,7 @@ model Game {
 
   team          Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
   registrations GameRegistration[]
+  lineups       GameLineup[]
 
   @@map("games")
 }
@@ -98,3 +101,29 @@ model GameRegistration {
   @@unique([game_id, user_id])
   @@map("game_registrations")
 }
+
+model GameLineup {
+  id         String   @id @default(uuid())
+  game_id    String
+  name       String   // e.g., "Команда А", "Красные"
+  created_at DateTime @default(now())
+
+  game       Game     @relation(fields: [game_id], references: [id], onDelete: Cascade)
+  players    LineupPlayer[]
+
+  @@map("game_lineups")
+}
+
+model LineupPlayer {
+  id         String   @id @default(uuid())
+  lineup_id  String
+  user_id    BigInt
+  created_at DateTime @default(now())
+
+  lineup     GameLineup @relation(fields: [lineup_id], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([lineup_id, user_id])
+  @@map("lineup_players")
+}
+
