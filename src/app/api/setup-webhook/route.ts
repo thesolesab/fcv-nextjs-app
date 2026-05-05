@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const webhookUrl = `${baseUrl}/api/webhook/telegram`;
 
     // Вызываем Telegram API для установки вебхука
-    const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${webhookUrl}&allowed_updates=["message", "my_chat_member"]`);
+    const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${webhookUrl}&allowed_updates=["message", "my_chat_member", "callback_query"]`);
     const data = await response.json();
 
     if (data.ok) {

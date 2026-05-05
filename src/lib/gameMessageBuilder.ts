@@ -45,7 +45,7 @@ export const gameMessageBuilder = {
           { text: '❌ Не иду', callback_data: `game_notgo_${gameId}` }
         ],
         [
-          { text: '📱 Открыть приложение', url: `https://t.me/${botUsername}/app?startapp=game_${gameId}` }
+          { text: '📱 Открыть приложение', url: `https://t.me/${botUsername}/${process.env.NEXT_PUBLIC_MINI_APP_SHORT_NAME || 'app'}?startapp=game_${gameId}` }
         ]
       ]
     };

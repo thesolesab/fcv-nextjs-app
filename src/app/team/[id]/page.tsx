@@ -9,7 +9,7 @@ function TeamDashboard({ teamId }: { teamId: string }) {
   const router = useRouter();
   const { isReady, user } = useTelegram();
   const { team, isLoading: teamLoading, error: teamError } = useTeamData(teamId);
-  const { games, isLoading: gamesLoading, registerForGame } = useGames(teamId);
+  const { games, isLoading: gamesLoading, registerForGame, deleteGame } = useGames(teamId);
 
   if (!isReady) return <div className="min-h-screen flex items-center justify-center text-zinc-500">Загрузка...</div>;
   if (teamLoading) return <div className="min-h-screen flex items-center justify-center text-zinc-500">Загрузка команды...</div>;
@@ -70,6 +70,20 @@ function TeamDashboard({ teamId }: { teamId: string }) {
                           {game.location && ` • 📍 ${game.location}`}
                         </div>
                       </div>
+                      
+                      {team.role === 'ADMIN' && (
+                        <button 
+                          onClick={() => {
+                            if (confirm('Вы уверены, что хотите удалить эту игру? Сообщение в группе тоже будет удалено.')) {
+                              deleteGame(game.id);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-600 p-2 bg-red-50 dark:bg-red-500/10 rounded-xl transition-colors"
+                          title="Удалить игру"
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                     
                     {/* Кнопки записи */}

@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
         // 4. Отправляем приветственное сообщение в группу с кнопкой
         const botInfo = await import('@/lib/telegramApi').then(m => m.telegramApi.getMe());
         const botUsername = botInfo?.result?.username || 'fcv_app_bot';
-        // Предполагаем, что шортнейм приложения - "app"
-        const appUrl = `https://t.me/${botUsername}/app?startapp=${team.id}`;
+        const shortName = process.env.NEXT_PUBLIC_MINI_APP_SHORT_NAME || 'app';
+        const appUrl = `https://t.me/${botUsername}/${shortName}?startapp=${team.id}`;
 
         const text = `🎉 <b>Привет! Я бот для управления футбольными сборами.</b>\n\nПрофиль команды для этого чата успешно создан!\n\nНажмите на кнопку ниже, чтобы открыть приложение и присоединиться к составу команды.`;
         const markup = {

@@ -21,6 +21,43 @@ export const gameService = {
   },
 
   /**
+   * Удаляет игру и связанное с ней сообщение в Telegram
+   */
+  async deleteGame(gameId: string, teamId: string) {
+    try {
+      // Сначала получаем игру, чтобы узнать ID сообщения
+      const game = await prisma.game.findFirst({
+        where: { id: gameId, team_id: teamId },
+        include: { team: true }
+      });
+
+      if (!game) {
+        throw new Error('Game not found or access denied');
+      }
+
+      // Удаляем игру из БД (каскадно удалятся и регистрации)
+      await prisma.game.delete({
+        where: { id: gameId }
+      });
+
+      // Если есть сообщение в Telegram, пытаемся его удалить
+      if (game.telegram_message_id && game.team?.telegram_chat_id) {
+        try {
+          const { telegramApi } = await import('@/lib/telegramApi');
+          await telegramApi.deleteMessage(game.team.telegram_chat_id, game.telegram_message_id);
+        } catch (err) {
+          console.error('Failed to delete Telegram message:', err);
+          // Игнорируем ошибку удаления сообщения, главное что игра удалена из БД
+        }
+      }
+
+      return true;
+    } catch (error: any) {
+      throw new Error(`Delete game error: ${error.message}`);
+    }
+  },
+
+  /**
    * Возвращает будущие игры для команды
    */
   async getUpcomingGames(teamId: string) {

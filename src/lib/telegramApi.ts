@@ -43,5 +43,21 @@ export const telegramApi = {
       })
     });
     return res.json();
+  },
+
+  async deleteMessage(chatId: string | number | bigint, messageId: string | number | bigint) {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not defined');
+
+    const url = `https://api.telegram.org/bot${token}/deleteMessage`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId.toString(),
+        message_id: messageId.toString()
+      })
+    });
+    return res.json();
   }
 };

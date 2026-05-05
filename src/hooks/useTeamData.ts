@@ -40,5 +40,16 @@ export function useGames(teamId: string) {
     }
   };
 
-  return { games: data?.games || [], isLoading, error, registerForGame };
+  const deleteGame = async (gameId: string) => {
+    if (!initData) return;
+    const res = await fetch(`/api/games?gameId=${gameId}&teamId=${teamId}`, {
+      method: 'DELETE',
+      headers: { 'x-telegram-init-data': initData }
+    });
+    if (res.ok) {
+      mutate();
+    }
+  };
+
+  return { games: data?.games || [], isLoading, error, registerForGame, deleteGame };
 }
