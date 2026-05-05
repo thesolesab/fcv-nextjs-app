@@ -66,6 +66,8 @@ export const gameMessageBuilder = {
         where: { id: game.id },
         data: { telegram_message_id: BigInt(result.result.message_id) }
       });
+    } else {
+      console.error('[sendGameMessage] Telegram API Error:', result);
     }
   },
 
@@ -85,12 +87,15 @@ export const gameMessageBuilder = {
       const botUsername = botInfo?.result?.username || 'fcv_app_bot';
       
       const markup = this.getInlineKeyboard(game.id, botUsername);
-      await telegramApi.editMessageText(
+      const result = await telegramApi.editMessageText(
         game.team.telegram_chat_id,
         game.telegram_message_id,
         text,
         markup
       );
+      if (!result.ok) {
+        console.error('[updateGameMessage] Telegram API Error:', result);
+      }
     }
   }
 };
