@@ -17,12 +17,7 @@ export const gameService = {
       });
 
       // Автоматически создаем 2 состава для новой игры
-      await prisma.gameLineup.createMany({
-        data: [
-          { game_id: game.id, name: 'Команда 1' },
-          { game_id: game.id, name: 'Команда 2' }
-        ]
-      });
+      await this.createDefaultLineup(game.id);
 
       return game;
     } catch (error: any) {
@@ -161,12 +156,7 @@ export const gameService = {
               });
 
               // Создаем 2 состава
-              await prisma.gameLineup.createMany({
-                data: [
-                  { game_id: newGame.id, name: 'Команда 1' },
-                  { game_id: newGame.id, name: 'Команда 2' }
-                ]
-              });
+              await this.createDefaultLineup(newGame.id)
 
               // Отправляем анонс в Telegram группу
               if (schedule.team.telegram_chat_id) {
@@ -197,6 +187,18 @@ export const gameService = {
         }
       },
       orderBy: { created_at: 'asc' }
+    });
+  },
+
+  /**
+ * Создать 2 дефолтных состава
+ */
+  async createDefaultLineup(gameId: string) {
+    return await prisma.gameLineup.createMany({
+      data: [
+        { game_id: gameId, name: 'Красные' },
+        { game_id: gameId, name: 'Зелёные' }
+      ]
     });
   },
 
