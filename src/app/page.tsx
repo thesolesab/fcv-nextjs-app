@@ -10,7 +10,7 @@ import { useTeams } from '@/hooks/useTeams';
 function Dashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isReady, startParam, initData } = useTelegram();
+  const { isReady, startParam, initData, chat } = useTelegram();
   const { registerUser } = useUsers();
   const { teams, isLoading, error, joinTeam } = useTeams();
 
@@ -33,14 +33,27 @@ function Dashboard() {
           // Вступаем в команду (параметр является teamId)
           joinTeam(startParam).catch(() => { });
         }
-      } else if (teams && teams.length === 1 && !isLoading) {
-        if (!searchParams.get('noredirect')) {
-          // Если только 1 команда и нет параметров - сразу заходим в нее
-          router.replace(`/team/${teams[0].id}`);
+      } else if (teams && !isLoading) {
+        const noredirect = searchParams.get('noredirect');
+        
+        if (!noredirect) {
+          // Если открыли из чата, переходим в команду этого чата
+          if (chat?.id) {
+            const currentTeam = teams.find((t: any) => Number(t.telegram_chat_id) === chat.id);
+            if (currentTeam) {
+              router.replace(`/team/${currentTeam.id}`);
+              return;
+            }
+          }
+          
+          // Если команд всего одна - сразу заходим в нее
+          if (teams.length === 1) {
+            router.replace(`/team/${teams[0].id}`);
+          }
         }
       }
     }
-  }, [isReady, startParam, teams, isLoading, initData, router, searchParams]);
+  }, [isReady, startParam, teams, isLoading, initData, router, searchParams, chat]);
 
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Инициализация Telegram...</div>;

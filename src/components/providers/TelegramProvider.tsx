@@ -9,6 +9,7 @@ interface TelegramContextType {
   user: TelegramUser | null;
   isReady: boolean;
   startParam?: string;
+  chat?: { id: number, type: string, title: string };
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -16,6 +17,7 @@ const TelegramContext = createContext<TelegramContextType>({
   user: null,
   isReady: false,
   startParam: undefined,
+  chat: undefined,
 });
 
 export function useTelegram() {
@@ -27,6 +29,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [initData, setInitData] = useState('');
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [startParam, setStartParam] = useState<string | undefined>();
+  const [chat, setChat] = useState<any>();
 
   useEffect(() => {
     // Ждем монтирования на клиенте
@@ -40,6 +43,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         if (WebApp.initDataUnsafe?.start_param) {
           setStartParam(WebApp.initDataUnsafe.start_param);
         }
+        if (WebApp.initDataUnsafe?.chat) {
+          setChat(WebApp.initDataUnsafe.chat);
+        }
       } catch (error) {
         console.error('Telegram WebApp error:', error);
       } finally {
@@ -49,7 +55,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TelegramContext.Provider value={{ initData, user, isReady, startParam }}>
+    <TelegramContext.Provider value={{ initData, user, isReady, startParam, chat }}>
       {children}
     </TelegramContext.Provider>
   );
