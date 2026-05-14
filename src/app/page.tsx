@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TelegramProvider, useTelegram } from '@/components/providers/TelegramProvider';
 import { TeamList } from '@/components/TeamList';
 import { useUsers } from '@/hooks/useUsers';
@@ -9,6 +9,7 @@ import { useTeams } from '@/hooks/useTeams';
 
 function Dashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isReady, startParam, initData } = useTelegram();
   const { registerUser } = useUsers();
   const { teams, isLoading, error, joinTeam } = useTeams();
@@ -32,15 +33,14 @@ function Dashboard() {
           // Вступаем в команду (параметр является teamId)
           joinTeam(startParam).catch(() => { });
         }
-      } else if (teams && teams.length === 1) {
-        const params = new URLSearchParams(window.location.search);
-        if (!params.get('noredirect')) {
+      } else if (teams && teams.length === 1 && !isLoading) {
+        if (!searchParams.get('noredirect')) {
           // Если только 1 команда и нет параметров - сразу заходим в нее
-          router.push(`/team/${teams[0].id}`);
+          router.replace(`/team/${teams[0].id}`);
         }
       }
     }
-  }, [isReady, startParam, teams, initData, router]);
+  }, [isReady, startParam, teams, isLoading, initData, router, searchParams]);
 
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Инициализация Telegram...</div>;
@@ -55,6 +55,8 @@ function Dashboard() {
   );
 }
 
+import { Suspense } from 'react';
+
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -66,7 +68,9 @@ export default function Home() {
 
   return (
     <TelegramProvider>
-      <Dashboard />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-zinc-500">Загрузка...</div>}>
+        <Dashboard />
+      </Suspense>
     </TelegramProvider>
   );
 }
