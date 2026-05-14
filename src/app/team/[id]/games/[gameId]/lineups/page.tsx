@@ -24,6 +24,7 @@ function LineupsDashboard({ teamId, gameId }: { teamId: string, gameId: string }
   }
 
   const isCoachOrAdmin = team.role === 'ADMIN' || team.role === 'COACH';
+  const isAdmin = team.role === 'ADMIN';
 
   // Собираем всех "Идущих"
   const goingRegistrations = game.registrations?.filter((r: any) => r.status === 'GOING') || [];
@@ -96,7 +97,7 @@ function LineupsDashboard({ teamId, gameId }: { teamId: string, gameId: string }
             <div key={lineup.id} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-bold text-lg">{lineup.name} ({lineup.players.length})</h3>
-                {isCoachOrAdmin && (
+                {isAdmin && (
                   <button onClick={() => deleteLineup(lineup.id)} className="text-red-500 hover:text-red-600 p-1">
                     🗑️
                   </button>
@@ -124,7 +125,7 @@ function LineupsDashboard({ teamId, gameId }: { teamId: string, gameId: string }
         </div>
 
         {/* Add Lineup */}
-        {isCoachOrAdmin && (
+        {isAdmin && (
           <div className="flex gap-2">
             <input 
               type="text" 

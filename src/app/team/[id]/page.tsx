@@ -25,7 +25,7 @@ function TeamDashboard({ teamId }: { teamId: string }) {
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{team.name}</h1>
             <p className="text-sm text-zinc-500 mt-1">{team.role === 'ADMIN' ? '👑 Администратор' : 'Участник'}</p>
           </div>
-          <button onClick={() => router.push('/')} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+          <button onClick={() => router.push('/?noredirect=1')} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
              Назад
           </button>
         </div>

@@ -89,6 +89,20 @@ export const gameService = {
    */
   async registerForGame(gameId: string, userId: number, status: 'GOING' | 'NOT_GOING' | 'MAYBE') {
     try {
+      // Удаляем из составов, если статус не GOING
+      if (status !== 'GOING') {
+        const lineups = await prisma.gameLineup.findMany({ where: { game_id: gameId } });
+        const lineupIds = lineups.map((l: any) => l.id);
+        if (lineupIds.length > 0) {
+          await prisma.lineupPlayer.deleteMany({
+            where: {
+              user_id: BigInt(userId),
+              lineup_id: { in: lineupIds }
+            }
+          });
+        }
+      }
+
       return await prisma.gameRegistration.upsert({
         where: {
           game_id_user_id: {
@@ -134,36 +148,41 @@ export const gameService = {
             const gameDate = new Date(targetDate);
             gameDate.setHours(hours, minutes, 0, 0);
 
-            // Проверяем, существует ли уже игра на эту дату (с погрешностью +- 1 час)
-            const existingGame = await prisma.game.findFirst({
-              where: {
-                team_id: schedule.team_id,
-                date: {
-                  gte: new Date(gameDate.getTime() - 1000 * 60 * 60),
-                  lte: new Date(gameDate.getTime() + 1000 * 60 * 60),
-                }
-              }
-            });
-
-            if (!existingGame) {
-              const newGame = await prisma.game.create({
-                data: {
+            // Создаем игру только если до нее осталось менее 164 часов (то есть прошло 4 часа с начала предыдущей)
+            const hoursUntilGame = (gameDate.getTime() - today.getTime()) / (1000 * 60 * 60);
+            
+            if (hoursUntilGame <= 164 && hoursUntilGame > 0) {
+              // Проверяем, существует ли уже игра на эту дату (с погрешностью +- 1 час)
+              const existingGame = await prisma.game.findFirst({
+                where: {
                   team_id: schedule.team_id,
-                  date: gameDate,
-                  location: schedule.location,
-                  description: 'Автоматически созданная игра по расписанию'
+                  date: {
+                    gte: new Date(gameDate.getTime() - 1000 * 60 * 60),
+                    lte: new Date(gameDate.getTime() + 1000 * 60 * 60),
+                  }
                 }
               });
 
-              // Создаем 2 состава
-              await this.createDefaultLineup(newGame.id)
+              if (!existingGame) {
+                const newGame = await prisma.game.create({
+                  data: {
+                    team_id: schedule.team_id,
+                    date: gameDate,
+                    location: schedule.location,
+                    description: 'Автоматически созданная игра по расписанию'
+                  }
+                });
 
-              // Отправляем анонс в Telegram группу
-              if (schedule.team.telegram_chat_id) {
-                await gameMessageBuilder.sendGameMessage(schedule.team.telegram_chat_id, newGame);
+                // Создаем 2 состава
+                await this.createDefaultLineup(newGame.id);
+
+                // Отправляем анонс в Telegram группу
+                if (schedule.team.telegram_chat_id) {
+                  await gameMessageBuilder.sendGameMessage(schedule.team.telegram_chat_id, newGame);
+                }
+
+                createdCount++;
               }
-
-              createdCount++;
             }
           }
         }

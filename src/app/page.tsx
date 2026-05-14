@@ -33,8 +33,11 @@ function Dashboard() {
           joinTeam(startParam).catch(() => { });
         }
       } else if (teams && teams.length === 1) {
-        // Если только 1 команда и нет параметров - сразу заходим в нее
-        router.push(`/team/${teams[0].id}`);
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get('noredirect')) {
+          // Если только 1 команда и нет параметров - сразу заходим в нее
+          router.push(`/team/${teams[0].id}`);
+        }
       }
     }
   }, [isReady, startParam, teams, initData, router]);

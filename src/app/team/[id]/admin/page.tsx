@@ -21,6 +21,13 @@ function AdminDashboard({ teamId }: { teamId: string }) {
   const [location, setLocation] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
+  const [manualDate, setManualDate] = useState('');
+  const [manualTime, setManualTime] = useState('19:00');
+  const [manualLocation, setManualLocation] = useState('');
+  const [manualDescription, setManualDescription] = useState('');
+  const [isCreatingManual, setIsCreatingManual] = useState(false);
+  const { initData } = useTelegram();
+
   if (!isReady || teamLoading) return <div className="min-h-screen flex items-center justify-center text-zinc-500">Загрузка...</div>;
   if (!team || team.role !== 'ADMIN') return <div className="min-h-screen flex items-center justify-center text-red-500">Доступ запрещен</div>;
 
@@ -30,6 +37,37 @@ function AdminDashboard({ teamId }: { teamId: string }) {
     await addSchedule(day, time, location);
     setLocation('');
     setIsAdding(false);
+  };
+
+  const handleCreateManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!initData) return;
+    setIsCreatingManual(true);
+    
+    try {
+      const res = await fetch('/api/games/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-telegram-init-data': initData },
+        body: JSON.stringify({
+          teamId,
+          date: manualDate,
+          time: manualTime,
+          location: manualLocation,
+          description: manualDescription
+        })
+      });
+      
+      if (res.ok) {
+        alert('Игра успешно создана!');
+        setManualDate('');
+        setManualLocation('');
+        setManualDescription('');
+      } else {
+        alert('Ошибка при создании игры');
+      }
+    } finally {
+      setIsCreatingManual(false);
+    }
   };
 
   return (
@@ -125,6 +163,70 @@ function AdminDashboard({ teamId }: { teamId: string }) {
             </button>
             <p className="text-xs text-zinc-500 mt-3 text-center">
               Игры по этому расписанию будут автоматически создаваться ботом за 7 дней до начала.
+            </p>
+          </form>
+        </div>
+
+        {/* Manual Game Form */}
+        <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <h2 className="text-lg font-bold mb-4">Создать разовую игру</h2>
+          <form onSubmit={handleCreateManual} className="space-y-4">
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Дата</label>
+                <input 
+                  type="date" 
+                  value={manualDate} 
+                  onChange={e => setManualDate(e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1">Время</label>
+                <input 
+                  type="time" 
+                  value={manualTime} 
+                  onChange={e => setManualTime(e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Локация</label>
+              <input 
+                type="text" 
+                placeholder="Где играем?" 
+                value={manualLocation} 
+                onChange={e => setManualLocation(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Описание</label>
+              <input 
+                type="text" 
+                placeholder="Товарищеский матч, турнир и т.д." 
+                value={manualDescription} 
+                onChange={e => setManualDescription(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={isCreatingManual}
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-xl transition-colors active:scale-[0.98] disabled:opacity-50"
+            >
+              {isCreatingManual ? 'Создание...' : 'Создать игру сейчас'}
+            </button>
+            <p className="text-xs text-zinc-500 mt-3 text-center">
+              Игра создастся сразу, в группу отправится сообщение.
             </p>
           </form>
         </div>
