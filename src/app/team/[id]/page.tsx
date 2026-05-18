@@ -52,7 +52,16 @@ function TeamDashboard({ teamId }: { teamId: string }) {
 
         {/* Games Section */}
         <div>
-          <h2 className="text-lg font-bold mb-3 px-1">Предстоящие игры</h2>
+          <div className="flex justify-between items-center mb-3 px-1">
+            <h2 className="text-lg font-bold">Предстоящие игры</h2>
+            <button 
+              onClick={() => router.push(`/team/${teamId}/archive`)}
+              className="text-sm font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+            >
+              Архив ➡️
+            </button>
+          </div>
+          
           {gamesLoading ? (
             <div className="text-center text-zinc-500 py-4">Загрузка игр...</div>
           ) : games.length === 0 ? (
@@ -60,8 +69,20 @@ function TeamDashboard({ teamId }: { teamId: string }) {
               Нет запланированных игр
             </div>
           ) : (
-            <div className="space-y-4">
-              {games.map((game: any) => {
+            <div className="space-y-6">
+              {(() => {
+                const now = new Date();
+                const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+                const daysToSunday = 7 - dayOfWeek;
+                
+                const endOfWeek = new Date(now);
+                endOfWeek.setDate(now.getDate() + daysToSunday);
+                endOfWeek.setHours(23, 59, 59, 999);
+
+                const thisWeekGames = games.filter((g: any) => new Date(g.date) <= endOfWeek);
+                const nextWeekGames = games.filter((g: any) => new Date(g.date) > endOfWeek);
+
+                const renderGame = (game: any) => {
                 const going = game.registrations?.filter((r: any) => r.status === 'GOING') || [];
                 const notGoing = game.registrations?.filter((r: any) => r.status === 'NOT_GOING') || [];
                 // Найти статус текущего юзера
@@ -127,7 +148,26 @@ function TeamDashboard({ teamId }: { teamId: string }) {
                     </div>
                   </div>
                 );
-              })}
+              };
+
+              return (
+                  <div className="space-y-6">
+                    {thisWeekGames.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-zinc-500 px-1 uppercase tracking-wider">Эта неделя</h3>
+                        {thisWeekGames.map(renderGame)}
+                      </div>
+                    )}
+                    
+                    {nextWeekGames.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-zinc-500 px-1 uppercase tracking-wider mt-6">Следующие игры</h3>
+                        {nextWeekGames.map(renderGame)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

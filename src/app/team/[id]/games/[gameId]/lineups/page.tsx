@@ -10,9 +10,12 @@ function LineupsDashboard({ teamId, gameId }: { teamId: string, gameId: string }
   const { isReady, user } = useTelegram();
   const { team, isLoading: teamLoading } = useTeamData(teamId);
   const { games, isLoading: gamesLoading } = useGames(teamId);
-  const { lineups, isLoading: lineupsLoading, createLineup, deleteLineup, assignPlayer, removePlayer } = useGameLineups(gameId);
+  const { lineups, isLoading: lineupsLoading, createLineup, deleteLineup, assignPlayer, removePlayer, updateLineupScore } = useGameLineups(gameId);
   
   const [newLineupName, setNewLineupName] = useState('');
+  const [isEditingScore, setIsEditingScore] = useState(false);
+  const [score1, setScore1] = useState<number | ''>('');
+  const [score2, setScore2] = useState<number | ''>('');
 
   if (!isReady || teamLoading || gamesLoading || lineupsLoading) {
     return <div className="min-h-screen flex items-center justify-center text-zinc-500">Загрузка...</div>;
@@ -60,6 +63,68 @@ function LineupsDashboard({ teamId, gameId }: { teamId: string, gameId: string }
              Назад
           </button>
         </div>
+
+        {/* Результаты игры (только если 2 команды) */}
+        {lineups.length === 2 && (
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm text-center">
+            <h2 className="text-sm font-bold text-zinc-500 mb-3 uppercase">Результат матча</h2>
+            <div className="flex items-center justify-center space-x-6">
+              <div className="text-right flex-1 font-medium">{lineups[0].name}</div>
+              
+              {isEditingScore ? (
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="number" 
+                    value={score1 === '' ? (lineups[0].score ?? '') : score1} 
+                    onChange={e => setScore1(e.target.value ? Number(e.target.value) : '')}
+                    className="w-12 h-12 text-center text-xl font-bold bg-zinc-100 dark:bg-zinc-800 rounded-xl border-none outline-none"
+                  />
+                  <span className="text-2xl font-bold text-zinc-300">:</span>
+                  <input 
+                    type="number" 
+                    value={score2 === '' ? (lineups[1].score ?? '') : score2} 
+                    onChange={e => setScore2(e.target.value ? Number(e.target.value) : '')}
+                    className="w-12 h-12 text-center text-xl font-bold bg-zinc-100 dark:bg-zinc-800 rounded-xl border-none outline-none"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3 bg-zinc-50 dark:bg-zinc-800 px-6 py-3 rounded-2xl">
+                  <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{lineups[0].score ?? '-'}</span>
+                  <span className="text-xl font-bold text-zinc-300">:</span>
+                  <span className="text-3xl font-bold text-red-600 dark:text-red-400">{lineups[1].score ?? '-'}</span>
+                </div>
+              )}
+              
+              <div className="text-left flex-1 font-medium">{lineups[1].name}</div>
+            </div>
+            
+            <div className="mt-4">
+              {isEditingScore ? (
+                <button 
+                  onClick={async () => {
+                    if (score1 !== '') await updateLineupScore(lineups[0].id, Number(score1));
+                    if (score2 !== '') await updateLineupScore(lineups[1].id, Number(score2));
+                    setIsEditingScore(false);
+                  }}
+                  className="px-6 py-2 bg-green-500 text-white rounded-xl font-medium text-sm hover:bg-green-600 transition-colors"
+                >
+                  Сохранить
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setScore1(lineups[0].score ?? '');
+                    setScore2(lineups[1].score ?? '');
+                    setIsEditingScore(true);
+                  }}
+                  className="text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                >
+                  ✏️ Изменить счет
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Available Players */}
         {isCoachOrAdmin && (

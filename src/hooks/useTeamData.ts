@@ -54,6 +54,21 @@ export function useGames(teamId: string) {
   return { games: data?.games || [], isLoading, error, registerForGame, deleteGame };
 }
 
+export function useArchiveGames(teamId: string) {
+  const { initData } = useTelegram();
+
+  const fetcher = async (url: string) => {
+    if (!initData) return [];
+    const res = await fetch(url, { headers: { 'x-telegram-init-data': initData } });
+    if (!res.ok) throw new Error('Failed to fetch archive games');
+    return res.json();
+  };
+
+  const { data, error, isLoading } = useSWR(initData && teamId ? `/api/games/archive?teamId=${teamId}` : null, fetcher);
+
+  return { games: data?.games || [], isLoading, error };
+}
+
 export function useTeamMembers(teamId: string) {
   const { initData } = useTelegram();
 
@@ -129,6 +144,16 @@ export function useGameLineups(gameId: string) {
     if (res.ok) mutate();
   };
 
+  const updateLineupScore = async (lineupId: string, score: number) => {
+    if (!initData) return;
+    const res = await fetch(`/api/games/${gameId}/lineups/score`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-telegram-init-data': initData },
+      body: JSON.stringify({ lineupId, score })
+    });
+    if (res.ok) mutate();
+  };
+
   return { 
     lineups: data?.lineups || [], 
     isLoading, 
@@ -136,6 +161,7 @@ export function useGameLineups(gameId: string) {
     createLineup, 
     deleteLineup, 
     assignPlayer, 
-    removePlayer 
+    removePlayer,
+    updateLineupScore
   };
 }

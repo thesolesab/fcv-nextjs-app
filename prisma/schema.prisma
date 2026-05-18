@@ -11,6 +11,8 @@ model User {
   username   String?
   first_name String?
   last_name  String?
+  position   String?
+  phone      String?
   created_at DateTime @default(now())
 
   team_members  TeamMember[]
@@ -106,6 +108,7 @@ model GameLineup {
   id         String   @id @default(uuid())
   game_id    String
   name       String   // e.g., "Команда А", "Красные"
+  score      Int?     // Счет игры для этого состава
   created_at DateTime @default(now())
 
   game       Game     @relation(fields: [game_id], references: [id], onDelete: Cascade)

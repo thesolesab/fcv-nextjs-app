@@ -85,6 +85,29 @@ export const gameService = {
   },
 
   /**
+   * Возвращает прошедшие игры для команды с результатами
+   */
+  async getPastGames(teamId: string) {
+    try {
+      return await prisma.game.findMany({
+        where: {
+          team_id: teamId,
+          date: { lt: new Date() } // Только прошедшие
+        },
+        orderBy: { date: 'desc' },
+        include: {
+          lineups: true,
+          registrations: {
+            include: { user: true }
+          }
+        }
+      });
+    } catch (error: any) {
+      throw new Error(`Prisma error: ${error.message}`);
+    }
+  },
+
+  /**
    * Запись пользователя на игру (Идет / Не идет)
    */
   async registerForGame(gameId: string, userId: number, status: 'GOING' | 'NOT_GOING' | 'MAYBE') {
@@ -148,10 +171,10 @@ export const gameService = {
             const gameDate = new Date(targetDate);
             gameDate.setHours(hours, minutes, 0, 0);
 
-            // Создаем игру только если до нее осталось менее 164 часов (то есть прошло 4 часа с начала предыдущей)
+            // Создаем игру только если до нее осталось менее 72 часов (ровно 3 суток)
             const hoursUntilGame = (gameDate.getTime() - today.getTime()) / (1000 * 60 * 60);
             
-            if (hoursUntilGame <= 164 && hoursUntilGame > 0) {
+            if (hoursUntilGame <= 72 && hoursUntilGame > 0) {
               // Проверяем, существует ли уже игра на эту дату (с погрешностью +- 1 час)
               const existingGame = await prisma.game.findFirst({
                 where: {
